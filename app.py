@@ -15,6 +15,12 @@ migrate=Migrate(app,db)
 @app.route('/')
 def home():
 	return "Welcome to the Student App"
+	
+@app.cli.command("seed")
+def seed():
+	from seeds import run_seeds
+	with app.app_context():
+		run_seeds()
 
 if __name__=='__main__':
 	app.run(debug=True)
