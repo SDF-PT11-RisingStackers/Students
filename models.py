@@ -14,6 +14,7 @@ class Student(db.Model,SerializerMixin):
 	course_id=db.Column(db.Integer,db.ForeignKey('courses.id'))
 	course=db.relationship('Course',back_populates='students')
 
+	serialize_rules = ('-course.students',)
 class Course (db.Model,SerializerMixin):
 	__tablename__="courses"
 
@@ -24,6 +25,6 @@ class Course (db.Model,SerializerMixin):
 	credits=db.Column(db.Integer)
 	students=db.relationship('Student',back_populates="course")
 
-
+	serialize_rules = ('-students.course',)
 	#.to_dict()-> return a dictionary
 	#.to_json()->return a JSON string version of the same dictionary

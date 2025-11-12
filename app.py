@@ -32,61 +32,73 @@ migrate=Migrate(app,db)
 # 		status=404
 # 	response=make_response(response_body,status)
 # 	return response
-@app.route('/')
-def home():
-	students=Student.query.all()
-	# students_data=[{
-	# 	"id":student.id,
-	# 	"name":student.name,
-	# 	"email":student.email,
-	# 	"age":student.age,
-	# 	"gender":student.gendere
-	# } for student in students
-	# ]
-	students_data= [s.to_dict() for s in students ]
-	return jsonify (students_data),200
+# @app.route('/')
+# def home():
+# 	students=Student.query.all()
+# 	students_data= [s.to_dict() for s in students ]
+# 	return jsonify (students_data),200
 
-@app.route('/students/<int:id>')
-def student_json(id):
-	student=Student.query.get(id)
-	if not student:
-		return jsonify({"error":f"Student {id} not found"}),404
-	# student_data={
-	# 	"id":student.id,
-	# 	"name":student.name,
-	# 	"email":student.email,
-	# 	"age":student.age,
-	# 	"gender":student.gender
-	# }
-	return jsonify(student.to_dict()),200
-@app.route('/courses')
-def get_courses():
-	courses=Course.query.all()
-	courses_data=[c.to_dict() for c in courses]
-	return jsonify(courses_data),200
+# @app.route('/students/<int:id>')
+# def student_json(id):
+# 	student=Student.query.get(id)
+# 	if not student:
+# 		return jsonify({"error":f"Student {id} not found"}),404
+# 	return jsonify(student.to_dict()),200
 
-@app.route('/courses/<int:id>')
-def get_course(id):
-	course= Course.query.get(id)
-	if not course:
-		return jsonify({"error":f"Course {id} not found"}),404
-	return jsonify(course.to_dict()),200
+# @app.route('/courses')
+# def get_courses():
+# 	courses=Course.query.all()
+# 	courses_data=[c.to_dict() for c in courses]
+# 	return jsonify(courses_data),200
+
+# @app.route('/courses/<int:id>')
+# def get_course(id):
+# 	course= Course.query.get(id)
+# 	if not course:
+# 		return jsonify({"error":f"Course {id} not found"}),404
+# 	return jsonify(course.to_dict()),200
 
 @app.route('/students', methods=['POST'])
 def create_students():
-	data=request.get_json()
+	data=request.get_json() #read the JSON body from the request
 	if not data:
 		return jsonify({"error":"Bad Request"}),400
 	name=data.get("name")
 	email=data.get("email")
 	if not name or not email:
 		return jsonify({"error":"Missing required fields:name and email"}),400
-@app.route('/courses')
+	if Student.query.filter_by(email=email).first():
+		return jsonify({"error":"A student with that email already exists"}),400
+	student= Student(
+		name=name,
+		email=email,
+		age=data.get("age"),
+		gender=data.get("gender")
+	)
+	db.session.add(student)
+	db.session.commit()
+
+	return jsonify(student.to_dict()),201
+
+@app.route('/students',methods=['GET'])
+def get_students():
+	students=Student.query.all()
+	students_data=[s.to_dict()for s in students]
+	return jsonify(students_data),200
+
+@app.route('/students/<int:id>',methods=['GET'])
+def get_student(id):
+	student=Student.query.get(id)
+	if not student:
+		return jsonify({"error":f"student {id} not found"}) 
+	return jsonify(student.to_dict()),200
+	
 @app.cli.command("seed")
 def seed():
 	from seeds import run_seeds
 	with app.app_context():
 		run_seeds()
+
 
 if __name__=='__main__':
 	app.run(debug=True)
